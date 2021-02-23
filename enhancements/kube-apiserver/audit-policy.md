@@ -152,6 +152,7 @@ we provide the following profiles:
 
 - `WriteRequestBodies`: this is like `Default`, but it logs request and response HTTP payloads for write requests (create, update, patch).
 - `AllRequestBodies`: this is like `WriteRequestBodies`, but also logs request and response HTTP payloads for read requests (get, list).
+- `UserRequests`: this logs the requests from users in the `system:authenticated:oauth` user groups and logs requests for (create, delete).
 
 All of the profiles have in common that security-sensitive resources, namely
 
@@ -205,7 +206,7 @@ apiVersion: config.openshift.io/v1
 spec:
   ...
   audit:
-    profile: Default | WriteRequestBodies | AllRequestBodies
+    profile: Default | WriteRequestBodies | AllRequestBodies | UserRequests
 ```
 
 In the future, we could add more, even more detailed profiles of logging responses, if customers need this:
@@ -287,6 +288,25 @@ The profile translate like this:
         # catch-all rule to log all other requests with request and response payloads
         - level: RequestResponse
     ```
+ - `UserRequests`
+
+     ```yaml
+         ... # common head
+
+       # Don't log for oauth tokens
+       - level: None
+         resources:
+         - group: "oauth.openshift.io"
+         resources: ["oauthaccesstokens"]
+       verbs:
+       - create
+       - delete
+     # Logs at Metadata level for these users and groups.
+     - level: Metadata
+       userGroups: ["system:authenticated:oauth"]
+     - level: Metadata
+       users: ["kube:admin"]
+   ```
 ### Test Plan
 
 **Note:** *Section not required until targeted at a release.*
